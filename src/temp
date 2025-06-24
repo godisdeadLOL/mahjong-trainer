@@ -1,0 +1,306 @@
+export type Tile = {
+	id?: number
+	suit: string
+	index: number
+	dora: boolean
+	hint: string
+	isHonor: boolean
+}
+
+export const generateWall = (includeHonors = true) => {
+	const wall: Tile[] = []
+
+	const addTile = (tile: Tile) => {
+		tile.id = wall.length
+		wall.push(tile)
+	}
+
+	// 1-9 Man + dora
+	// 1-9 Sou + dora
+	// 1-9 Pin + dora
+	const suits = ["Man", "Sou", "Pin"]
+	suits.forEach((suit) => {
+		for (var i = 1; i <= 9; i++) {
+			for (var t = 1; t <= 4; t++) {
+				const tile: Tile = { suit: suit, index: i, dora: i == 5 && t == 4, hint: i.toString(), isHonor: false }
+				addTile(tile)
+			}
+		}
+	})
+
+	// Ton (East)
+	// Nan (South)
+	// Shaa (West)
+	// Pei (North)
+
+	// Chun (Red)
+	// Hatsu (Green)
+	// Haku (White)
+
+	const honors = ["Ton", "Nan", "Shaa", "Pei", "Haku", "Hatsu", "Chun"]
+	const honorHints = ["R", "Wh", "G", "E", "S", "W", "N"]
+
+	if (includeHonors)
+		honors.forEach((honor, index) => {
+			for (var t = 1; t <= 4; t++) {
+				const tile: Tile = { suit: honor, dora: false, hint: honorHints[index], index: index + 1, isHonor: true }
+				addTile(tile)
+			}
+		})
+
+	return wall
+}
+
+export const loadHandFromString = (line: string, wall: Tile[]) => {
+	// Получить отдельные сегменты
+	let man = ""
+	let pin = ""
+	let sou = ""
+	let honors = ""
+
+	let segment = ""
+	for (let i = 0; i < line.length; i++) {
+		const ch = line[i]
+		if (["m", "p", "s", "z"].indexOf(ch) != -1) {
+			if (ch == "m") man += segment
+			else if (ch == "p") pin += segment
+			else if (ch == "s") sou += segment
+			else honors += segment
+
+			segment = ""
+		} else segment += ch
+	}
+
+	// Достать нужные тайлы
+	const tiles: Tile[] = []
+
+	const suits = ["Man", "Pin", "Sou"]
+	const sets = [man, pin, sou]
+
+	for (let s = 0; s < suits.length; s++) {
+		for (let i = 0; i < sets[s].length; i++) {
+			const index = parseInt(sets[s][i])
+			const tile = wall.find((t) => tiles.indexOf(t) == -1 && t.suit == suits[s] && t.index == index)
+			tiles.push(tile!)
+		}
+	}
+
+	for (let i = 0; i < honors.length; i++) {
+		const index = parseInt(honors[i])
+		const tile = wall.find((t) => tiles.indexOf(t) == -1 && t.isHonor && t.index == index)
+		tiles.push(tile!)
+	}
+
+	return tiles
+}
+
+export const sortHand = (hand: Tile[]) => {
+	const order = ["Man", "Pin", "Sou", "Ton", "Nan", "Shaa", "Pei", "Haku", "Hatsu", "Chun"]
+
+	return hand.sort((a, b) => {
+		const valueA = order.findIndex((entry) => entry == a.suit)
+		const valueB = order.findIndex((entry) => entry == b.suit)
+
+		if (valueA != valueB) return valueA - valueB
+		else if (!a.index) return 0
+		else return a.index - b.index!
+	})
+}
+
+const tilesToAmounts = (tiles: Tile[]) => {
+	const amounts: number[] = Array<number>(9).fill(0)
+	tiles.forEach((tile) => amounts[tile.index - 1]++)
+	return amounts
+}
+
+const tilesToString = (tiles: Tile[]) => {
+	tiles = sortHand(tiles)
+
+	const getTileLetter = (tile: Tile) => {
+		if (tile.isHonor) return "z"
+		else return tile.suit[0].toLowerCase()
+	}
+
+	let result = ""
+	let prev: Tile | null = null
+	for (let i = 0; i < tiles.length; i++) {
+		const tile = tiles[i]
+		if (!!prev && tile.suit !== prev.suit) result += getTileLetter(prev)
+
+		result += tile.index
+		prev = tile
+	}
+	result += getTileLetter(prev!)
+
+	return result
+}
+
+const GroupType = {
+	Pair: "Pair",
+	Pon: "Pon",
+	Chi: "Chi",
+	Ryanmen: "Ryanmen", // 45
+	Kanchan: "Kanchan", // 46
+} as const
+type GroupType = string
+
+class Group {
+	type: GroupType
+	index: number
+
+	constructor(type: GroupType, index: number) {
+		this.type = type
+		this.index = index
+	}
+
+	apply(tiles: number[], mult: number = 1) {
+		switch (this.type) {
+			case GroupType.Pair:
+				tiles[this.index] += 2 * mult
+				break
+			case GroupType.Pon:
+				tiles[this.index] += 3 * mult
+				break
+			case GroupType.Chi:
+				tiles[this.index] += 1 * mult
+				tiles[this.index + 1] += 1 * mult
+				tiles[this.index + 2] += 1 * mult
+				break
+			case GroupType.Ryanmen:
+				tiles[this.index] += 1 * mult
+				tiles[this.index + 1] += 1 * mult
+				break
+			case GroupType.Kanchan:
+				tiles[this.index] += 1 * mult
+				tiles[this.index + 2] += 1 * mult
+				break
+		}
+	}
+}
+
+const findAllGroups = (tiles: number[]) => {
+	// группы дубликаты не учитываются
+
+	const groups: Group[] = []
+
+	for (let i = 0; i < tiles.length; i++) {
+		if (tiles[i] >= 3) groups.push(new Group(GroupType.Pon, i))
+		if (tiles[i] >= 2) groups.push(new Group(GroupType.Pair, i))
+	}
+
+	for (let i = 0; i < tiles.length - 2; i++) {
+		if (tiles[i] >= 1 && tiles[i + 1] >= 1 && tiles[i + 2] >= 1) groups.push(new Group(GroupType.Chi, i))
+		if (tiles[i] >= 1 && tiles[i + 2] >= 1) groups.push(new Group(GroupType.Kanchan, i))
+	}
+
+	for (let i = 0; i < tiles.length - 1; i++) {
+		if (tiles[i] >= 1 && tiles[i + 1] >= 1) groups.push(new Group(GroupType.Ryanmen, i))
+	}
+
+	return groups
+}
+
+const calculateCounts = (groups: Group[]) => {
+	let pairs = 0
+	let sets = 0
+	let taatsu = 0
+
+	groups.forEach((group) => {
+		if (group.type === GroupType.Pair) pairs++
+		else if (group.type === GroupType.Chi || group.type === GroupType.Pon) sets++
+		else taatsu++
+	})
+
+	return { pairs, sets, taatsu }
+}
+
+const calculateShanten = (counts: { pairs: number; sets: number; taatsu: number }) => {
+	let { pairs, sets, taatsu } = counts
+
+	// special case: 6 или больше блоков
+	if (pairs + sets + taatsu >= 6) {
+		while (pairs + sets + taatsu >= 6) {
+			if (taatsu > 0) taatsu--
+			else if (pairs > 0) pairs--
+		}
+
+		taatsu = Math.min(5 - sets, taatsu)
+	}
+
+	let shanten = 8 - sets * 2 - (taatsu + pairs)
+
+	// special case: 5 блоков и без пар
+	if (pairs == 0 && taatsu + sets == 5) shanten++
+
+	return shanten
+}
+
+const findBestGroupCombo = (tiles: number[], current: Group[] = [], best: Group[] = []) => {
+	const groups = findAllGroups(tiles)
+
+	if (groups.length == 0) {
+		const currentCounts = calculateCounts(current)
+		const bestCounts = calculateCounts(best)
+
+		if (calculateShanten(currentCounts) < calculateShanten(bestCounts)) best.splice(0, best.length, ...current)
+	} else {
+		for (let i = 0; i < groups.length; i++) {
+			const group = groups[i]
+
+			group.apply(tiles, -1)
+			current.push(group)
+			findBestGroupCombo(tiles, current, best)
+			current.splice(current.length - 1, 1)
+			group.apply(tiles, 1)
+		}
+	}
+
+	return best
+}
+
+const findHonorCounts = (tiles: number[]) => {
+	let pairs = 0
+	let sets = 0
+
+	for (let i = 0; i < tiles.length; i++) {
+		if (tiles[i] >= 3) sets++
+		else if (tiles[i] == 2) pairs++
+	}
+
+	return { pairs, sets, taatsu: 0 }
+}
+
+export const calculateNormalShanten = (hand: Tile[]) => {
+	const man = tilesToAmounts(hand.filter((t) => t.suit === "Man"))
+	const pin = tilesToAmounts(hand.filter((t) => t.suit === "Pin"))
+	const sou = tilesToAmounts(hand.filter((t) => t.suit === "Sou"))
+	const honor = tilesToAmounts(hand.filter((t) => t.isHonor))
+
+	const manCounts = calculateCounts(findBestGroupCombo(man))
+	const pinCounts = calculateCounts(findBestGroupCombo(pin))
+	const souCounts = calculateCounts(findBestGroupCombo(sou))
+	const honorCounts = findHonorCounts(honor)
+
+	// console.log(manCounts, pinCounts, souCounts, honorCounts)
+
+	const counts = {
+		pairs: manCounts.pairs + pinCounts.pairs + souCounts.pairs + honorCounts.pairs,
+		sets: manCounts.sets + pinCounts.sets + souCounts.sets + honorCounts.sets,
+		taatsu: manCounts.taatsu + pinCounts.taatsu + souCounts.taatsu,
+	}
+
+	return calculateShanten(counts)
+}
+
+export const testMahjong = (hand: Tile[]) => {
+	// const line = tilesToString(tiles)
+	// console.log(line)
+
+	const start = Date.now()
+
+	for(let i = 0; i < 136 * 12; i++) calculateNormalShanten(hand)
+	// console.log(shanten)
+
+	const diff = Date.now() - start
+	console.log("Time:", diff / 1000)
+}
