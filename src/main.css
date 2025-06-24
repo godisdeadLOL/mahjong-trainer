@@ -1,9 +1,35 @@
 @import "tailwindcss";
-/* 
-body {
-    overflow-x: hidden;
-} */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+	--color-background: var(--color-white);
+	--color-text: var(--color-neutral-900);
+    --color-border: var(--color-neutral-300);
+
+    --color-background-elevate: var(--color-white);
+    --color-background-hover: var(--color-neutral-100);
+    --color-background-active: var(--color-neutral-200);
+}
+
+.dark {
+	--color-background: var(--color-neutral-900);
+    --color-text: var(--color-neutral-200);
+    --color-border: var(--color-neutral-700);
+
+    --color-background-elevate: var(--color-neutral-900);
+    --color-background-hover: var(--color-neutral-800);
+    --color-background-active: var(--color-neutral-700);
+}
 
 #app {
-    @apply h-[100dvh]
+	@apply h-[100dvh] text-text;
+}
+
+body {
+    @apply font-mono bg-background;
+}
+
+.button {
+	@apply cursor-pointer border-1 rounded-md border-border bg-background-elevate hover:bg-background-hover active:bg-background-active;
 }

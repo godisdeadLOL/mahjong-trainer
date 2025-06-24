@@ -1,5 +1,4 @@
-import { useState } from "preact/hooks";
-
+import { useEffect, useState } from "preact/hooks"
 
 export const useTileWidth = () => {
 	const [width, setWidth] = useState(48)
@@ -14,8 +13,11 @@ export const useTileWidth = () => {
 		setWidth(value)
 	}
 
-	addEventListener("resize", recalculate)
-	recalculate()
+	useEffect(() => {
+		recalculate()
+		addEventListener("resize", recalculate)
+		return () => removeEventListener("resize", recalculate)
+	}, [])
 
 	return width
 }

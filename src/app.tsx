@@ -3,6 +3,7 @@ import { generateWall, sortTiles, calculateDiscardResults, type DiscardResults, 
 import { pullTilesFromString } from "./mahjong/helper"
 import { LuCircleAlert, LuCircleCheck, LuCircleX, LuRotateCcw, LuSun } from "react-icons/lu"
 import { TileItem } from "./components/TileItem"
+import { useDarkMode } from "./hooks/useDarkMode"
 
 type TileGroupProps = {
 	tiles: Tile[]
@@ -24,7 +25,7 @@ export const TooltipText = ({ text, message }: any) => {
 	return (
 		<span class="relative select-none underline group">
 			{text}
-			<div class="hidden text-center group-hover:block group-active:block absolute left-[50%] top-0 px-4 py-1 bg-white outline outline-neutral-300 rounded-xl -translate-y-[105%] -translate-x-[50%]">
+			<div class="hidden text-center group-hover:block group-active:block absolute left-[50%] top-0 px-4 py-2 bg-background-elevate border-1 border-border rounded-xl -translate-y-[105%] -translate-x-[50%]">
 				{message}
 			</div>
 		</span>
@@ -32,13 +33,15 @@ export const TooltipText = ({ text, message }: any) => {
 }
 
 export const AppBar = ({ onRestart }: any) => {
+	const { isDarkMode, setIsDarkMode} = useDarkMode()
+
 	return (
 		<div class="flex gap-2 mx-4 mb-8">
-			<button class="border-1 px-4 font-mono py-1 rounded-md border-neutral-300" onClick={onRestart}>
+			<button class="button py-1 px-4" onClick={onRestart}>
 				новая рука
 			</button>
 
-			<button class="ml-auto border-1 p-2 rounded-md border-neutral-300">
+			<button class="ml-auto button p-2" onClick={() => setIsDarkMode(!isDarkMode)}>
 				<LuSun />
 			</button>
 		</div>
@@ -90,10 +93,13 @@ const Feedback = ({ playerTurn }: { playerTurn: PlayerTurn }) => {
 
 			{/* Текущий сброс */}
 			<div>
-				Вы сбросили <DiscardChoiceFeedback choice={currentChoice} showUkeire={rating !== "worst"} />. 
-				<br class="sm:hidden"/>{" "}
-				{/* {rating === "best" && "Это лучший ход."} */}
-				{rating === "worst" && (<><TooltipText text="Шантен" message="Кол-во тайлов до тенпая" /> руки увеличен.</>)}
+				Вы сбросили <DiscardChoiceFeedback choice={currentChoice} showUkeire={rating !== "worst"} />.
+				<br class="sm:hidden" /> {/* {rating === "best" && "Это лучший ход."} */}
+				{rating === "worst" && (
+					<>
+						<TooltipText text="Шантен" message="Кол-во тайлов до тенпая" /> руки увеличен.
+					</>
+				)}
 			</div>
 
 			{/* Лучшие сбросы */}
@@ -230,16 +236,18 @@ export function App() {
 							<div class="select-none">
 								{gameState === "ongoing" && <Feedback playerTurn={turns[turns.length - 1]} />}
 								{gameState === "empty_wall" && "Стена пуста."}
-								{gameState === "tenpai" && `Вы достигли тенпая. Ваш счет: ${score}%`}
+								{gameState === "tenpai" && `Вы достигли тенпая. Ваш счет: ${score}%.`}
 							</div>
 
 							{gameState !== "tenpai" && (
-								<button onClick={cancelLastTurn} class="mt-4 border-1 p-2 rounded-md cursor-pointer border-neutral-300 hover:bg-neutral-100 active:bg-neutral-200">
+								<button onClick={cancelLastTurn} class="mt-4 p-2 button">
 									<LuRotateCcw />
 								</button>
 							)}
 						</>
-					) : "Выберите любой тайл для сброса."}
+					) : (
+						"Выберите любой тайл для сброса."
+					)}
 				</div>
 			</div>
 		</>
