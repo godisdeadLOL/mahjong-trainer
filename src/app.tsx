@@ -1,7 +1,7 @@
 import { useEffect, useState } from "preact/hooks"
 import { generateWall, sortTiles, calculateDiscardResults, type DiscardResults, Tile, type DiscardChoice, isHandTenpai } from "./mahjong/core"
 import { pullTilesFromString } from "./mahjong/helper"
-import { LuCircleCheck, LuCircleX, LuRotateCcw, LuSun } from "react-icons/lu"
+import { LuCircleAlert, LuCircleCheck, LuCircleX, LuRotateCcw, LuSun } from "react-icons/lu"
 import { TileItem } from "./components/TileItem"
 
 type TileGroupProps = {
@@ -82,11 +82,17 @@ const Feedback = ({ playerTurn }: { playerTurn: PlayerTurn }) => {
 				</RatingBlock>
 			)}
 
+			{rating === "average" && (
+				<RatingBlock className="text-orange-500">
+					<LuCircleAlert /> Не лучший ход
+				</RatingBlock>
+			)}
+
 			{/* Текущий сброс */}
 			<div>
 				Вы сбросили <DiscardChoiceFeedback choice={currentChoice} showUkeire={rating !== "worst"} />. 
 				<br class="sm:hidden"/>{" "}
-				{rating === "best" && "Это лучший ход."}
+				{/* {rating === "best" && "Это лучший ход."} */}
 				{rating === "worst" && (<><TooltipText text="Шантен" message="Кол-во тайлов до тенпая" /> руки увеличен.</>)}
 			</div>
 
@@ -215,13 +221,13 @@ export function App() {
 				<AppBar onRestart={restartHand} />
 				<TileGroup className="flex-wrap px-8 max-w-lg mx-auto" tiles={discard} />
 			</div>
-			<div class="pt-12">
+			<div class="pt-8">
 				<TileGroup className="px-2 justify-center" tiles={hand} onInteract={discardTile} lastTileOffset={true} />
 
-				<div class="mt-8 px-8 flex flex-col items-center">
-					{turns.length > 0 && (
+				<div class="mt-8 px-8 flex flex-col items-center font-mono text-center select-none">
+					{turns.length > 0 ? (
 						<>
-							<div class="font-mono text-center select-none">
+							<div class="select-none">
 								{gameState === "ongoing" && <Feedback playerTurn={turns[turns.length - 1]} />}
 								{gameState === "empty_wall" && "Стена пуста."}
 								{gameState === "tenpai" && `Вы достигли тенпая. Ваш счет: ${score}%`}
@@ -233,7 +239,7 @@ export function App() {
 								</button>
 							)}
 						</>
-					)}
+					) : "Выберите любой тайл для сброса."}
 				</div>
 			</div>
 		</>
