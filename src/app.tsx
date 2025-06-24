@@ -85,6 +85,7 @@ const Feedback = ({ playerTurn }: { playerTurn: PlayerTurn }) => {
 			{/* Текущий сброс */}
 			<div>
 				Вы сбросили <DiscardChoiceFeedback choice={currentChoice} showUkeire={rating !== "worst"} />. 
+				<br class="sm:hidden"/>{" "}
 				{rating === "best" && "Это лучший ход."}
 				{rating === "worst" && (<><TooltipText text="Шантен" message="Кол-во тайлов до тенпая" /> руки увеличен.</>)}
 			</div>
