@@ -1,132 +1,12 @@
 import { useEffect, useState } from "preact/hooks"
-import { generateWall, sortTiles, calculateDiscardResults, type DiscardResults, Tile, type DiscardChoice, isHandTenpai } from "./mahjong/core"
-import { pullTilesFromString } from "./mahjong/helper"
-import { LuCircleAlert, LuCircleCheck, LuCircleX, LuRotateCcw, LuSun } from "react-icons/lu"
-import { TileItem } from "./components/TileItem"
-import { useDarkMode } from "./hooks/useDarkMode"
-
-type TileGroupProps = {
-	tiles: Tile[]
-	onInteract?: (tile: Tile) => void
-	lastTileOffset?: boolean
-	className?: string
-}
-export const TileGroup = ({ className = "", tiles, onInteract, lastTileOffset = false }: TileGroupProps) => {
-	return (
-		<div class={`flex gap-0.5 ${className}`}>
-			{tiles.map((tile, index) => (
-				<TileItem offset={lastTileOffset && index == 13} onInteract={onInteract} key={tile.id} tile={tile} />
-			))}
-		</div>
-	)
-}
-
-export const TooltipText = ({ text, message }: any) => {
-	return (
-		<span class="relative select-none underline group">
-			{text}
-			<div class="hidden text-center group-hover:block group-active:block absolute left-[50%] top-0 px-4 py-2 bg-background-elevate border-1 border-border rounded-xl -translate-y-[105%] -translate-x-[50%]">
-				{message}
-			</div>
-		</span>
-	)
-}
-
-export const AppBar = ({ onRestart }: any) => {
-	const { isDarkMode, setIsDarkMode} = useDarkMode()
-
-	return (
-		<div class="flex gap-2 mx-4 mb-8">
-			<button class="button py-1 px-4" onClick={onRestart}>
-				новая рука
-			</button>
-
-			<button class="ml-auto button p-2" onClick={() => setIsDarkMode(!isDarkMode)}>
-				<LuSun />
-			</button>
-		</div>
-	)
-}
-
-const DiscardChoiceFeedback = ({ choice, showUkeire = true }: { choice: DiscardChoice; showUkeire?: boolean }) => {
-	return (
-		<>
-			{choice.tile.getName()}
-			{showUkeire && (
-				<>
-					{" ("}
-					<TooltipText text={choice.ukeire} message="Число тайлов улучшающих руку" />
-					{")"}
-				</>
-			)}
-		</>
-	)
-}
-
-const Feedback = ({ playerTurn }: { playerTurn: PlayerTurn }) => {
-	const currentChoice = playerTurn.discardResults.choices.find((entry) => entry.tile === playerTurn.discarded)!
-
-	type Rating = "best" | "worst" | "average"
-	const rating: Rating = currentChoice.ukeire === playerTurn.discardResults.bestUkeire ? "best" : currentChoice.ukeire === 0 ? "worst" : "average"
-
-	const RatingBlock = ({ className, children }: any) => <div class={`flex items-center justify-center gap-2 mb-2 ${className}`}>{children}</div>
-
-	return (
-		<>
-			{rating === "best" && (
-				<RatingBlock className="text-green-500">
-					<LuCircleCheck /> Лучший ход
-				</RatingBlock>
-			)}
-
-			{rating === "worst" && (
-				<RatingBlock className="text-red-500">
-					<LuCircleX /> Плохой ход
-				</RatingBlock>
-			)}
-
-			{rating === "average" && (
-				<RatingBlock className="text-orange-500">
-					<LuCircleAlert /> Не лучший ход
-				</RatingBlock>
-			)}
-
-			{/* Текущий сброс */}
-			<div>
-				Вы сбросили <DiscardChoiceFeedback choice={currentChoice} showUkeire={rating !== "worst"} />.
-				<br class="sm:hidden" /> {/* {rating === "best" && "Это лучший ход."} */}
-				{rating === "worst" && (
-					<>
-						<TooltipText text="Шантен" message="Кол-во тайлов до тенпая" /> руки увеличен.
-					</>
-				)}
-			</div>
-
-			{/* Лучшие сбросы */}
-			{rating !== "best" && (
-				<div class="mt-4 sm:mt-0">
-					Лучшие сбросы: <br class="sm:hidden" />
-					{playerTurn.discardResults.bestChoices.map((choice, index) => (
-						<>
-							{index > 0 && ", "}
-							<DiscardChoiceFeedback choice={choice} />
-						</>
-					))}
-					{"."}
-				</div>
-			)}
-		</>
-	)
-}
-
-type PlayerTurn = {
-	prevPulled: Tile
-	discarded: Tile
-	pulled: Tile
-	discardResults: DiscardResults
-}
-
-type GameState = "ongoing" | "tenpai" | "empty_wall"
+import { generateWall, sortTiles, calculateDiscardResults, Tile, isHandTenpai } from "@/mahjong/core"
+import { pullTilesFromString } from "@/mahjong/helper"
+import { LuRotateCcw } from "react-icons/lu"
+import { AppBar } from "@/page/AppBar"
+import type { GameState, PlayerTurn } from "@/types"
+import { TileGroup } from "@/components/TileGroup"
+import { TurnFeedback } from "@/page/TurnFeedback"
+import { TenpaiFeedback } from "@/page/TenpaiFeedback"
 
 export function App() {
 	const [wall, setWall] = useState<Tile[]>(generateWall(false))
@@ -135,21 +15,8 @@ export function App() {
 
 	const [turns, setTurns] = useState<PlayerTurn[]>([])
 	const [gameState, setGameState] = useState<GameState>("ongoing")
-	const [score, setScore] = useState<number | null>(null)
 
 	const handString = new URLSearchParams(window.location.search).get("hand")
-
-	const recalculateScore = () => {
-		let current = 0
-		let best = 0
-
-		turns.forEach((turn) => {
-			current += turn.discardResults.choices.find((entry) => entry.tile === turn.discarded)!.ukeire
-			best += turn.discardResults.bestUkeire
-		})
-
-		setScore(Math.round((100.0 * current) / best))
-	}
 
 	const discardTile = (tile: Tile) => {
 		if (gameState !== "ongoing") return
@@ -159,7 +26,6 @@ export function App() {
 		if (isHandTenpai(currentHand)) {
 			setGameState("tenpai")
 			setHand(sortTiles(currentHand))
-			recalculateScore()
 			return
 		}
 
@@ -201,7 +67,6 @@ export function App() {
 		setWall(wall.slice(14))
 
 		setGameState("ongoing")
-		setScore(null)
 		setTurns([])
 		setDiscard([])
 	}
@@ -225,30 +90,24 @@ export function App() {
 		<>
 			<div class="min-h-1/2 pt-4">
 				<AppBar onRestart={restartHand} />
-				<TileGroup className="flex-wrap px-8 max-w-lg mx-auto" tiles={discard} />
+				<TileGroup className="flex-wrap mt-8 px-8 max-w-lg mx-auto" tiles={discard} />
 			</div>
+
 			<div class="pt-8">
 				<TileGroup className="px-2 justify-center" tiles={hand} onInteract={discardTile} lastTileOffset={true} />
 
-				<div class="mt-8 px-8 flex flex-col items-center font-mono text-center select-none">
-					{turns.length > 0 ? (
-						<>
-							<div class="select-none">
-								{gameState === "ongoing" && <Feedback playerTurn={turns[turns.length - 1]} />}
-								{gameState === "empty_wall" && "Стена пуста."}
-								{gameState === "tenpai" && `Вы достигли тенпая. Ваш счет: ${score}%.`}
-							</div>
+				<section class="text-center mt-4">
+					{turns.length == 0 && "Выберите тайл для сброса."}
+					{gameState === "ongoing" && turns.length > 0 && <TurnFeedback playerTurn={turns[turns.length - 1]} />}
+					{gameState === "empty_wall" && "Стена пуста."}
+					{gameState === "tenpai" && <TenpaiFeedback turns={turns} />}
 
-							{gameState !== "tenpai" && (
-								<button onClick={cancelLastTurn} class="mt-4 p-2 button">
-									<LuRotateCcw />
-								</button>
-							)}
-						</>
-					) : (
-						"Выберите любой тайл для сброса."
+					{gameState !== "tenpai" && turns.length > 0 && (
+						<button onClick={cancelLastTurn} class="block mx-auto mt-4 p-2 button">
+							<LuRotateCcw />
+						</button>
 					)}
-				</div>
+				</section>
 			</div>
 		</>
 	)

@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fontsource/fira-code": "^5.2.6",
     "@tailwindcss/vite": "^4.1.10",
     "preact": "^10.26.5",
     "react-icons": "^5.5.0",
