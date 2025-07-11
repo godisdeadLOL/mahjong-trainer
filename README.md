@@ -33,4 +33,5 @@
 
 ## 🙌 Благодарности
 
-- [FluffyStuff/riichi-mahjong-tiles](https://github.com/FluffyStuff/riichi-mahjong-tiles) — за спрайты тайлов
+- Вдохновлено [Mahjong Efficiency Trainer](https://euophrys.itch.io/mahjong-efficiency-trainer)
+- Спрайты тайлов взяты из [FluffyStuff/riichi-mahjong-tiles](https://github.com/FluffyStuff/riichi-mahjong-tiles)
