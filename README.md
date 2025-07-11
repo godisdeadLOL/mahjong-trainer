@@ -1,4 +1,4 @@
-# mahjong-trainer
+# 🀄 mahjong-trainer
 
 Интерактивный тренажёр для повышения эффективности игры в риичи-маджонг.
 
@@ -10,7 +10,7 @@
 
 ## ✨ Особенности
 
-- 📊 Оценка ходов на основе укеире
+- 📊 Оценка эффективности ходов
 - ↩️ Отмена последнего хода
 - 🌙 Темная тема с альтернативными тайлами
 
@@ -20,10 +20,10 @@
 
 ## 🧰 Технологии
 
-- **TypeScript**
-- **Preact**
-- **Tailwind CSS**
-- **Vite**
+![TypeScript](https://img.shields.io/badge/-TypeScript-3178C6?logo=typescript&logoColor=white&style=flat)
+![Preact](https://img.shields.io/badge/-Preact-673AB8?logo=preact&logoColor=white&style=flat)
+![Tailwind CSS](https://img.shields.io/badge/-Tailwind%20CSS-38B2AC?logo=tailwind-css&logoColor=white&style=flat)
+![Vite](https://img.shields.io/badge/-Vite-646CFF?logo=vite&logoColor=white&style=flat)
 
 ## 🔧 Планы на будущее
 
@@ -33,4 +33,4 @@
 
 ## 🙌 Благодарности
 
-- 🎴 [Набор изображений тайлов](https://github.com/FluffyStuff/riichi-mahjong-tiles) — за отличные графические ресурсы.
+- [FluffyStuff/riichi-mahjong-tiles](https://github.com/FluffyStuff/riichi-mahjong-tiles) — за спрайты тайлов
