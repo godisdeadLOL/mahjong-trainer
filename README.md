@@ -6,7 +6,7 @@
 
 ## 🌍 Попробовать
 
-🔗 [Открыть сайт]()
+🔗 [Открыть сайт](https://godisdeadlol.github.io/mahjong-trainer/)
 
 ## ✨ Особенности
 
